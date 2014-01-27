@@ -36,6 +36,8 @@ class WebLogHandler(BaseHTTPRequestHandler):
     for k in daemon.services.keys():
       message += '<tr bgcolor=#FFFFFF><td>%s</td><td>%s</td><td>%s</td></tr>' % (k, time.strftime('%m/%d/%Y %H:%M:%S %z', daemon.services[k]['lastcheck']), daemon.services[k]['status'])
     message += '</table>'
+    message += '<p>current time: %s' % (time.strftime('%m/%d/%Y %H:%M:%S %z', time.localtime()))
+    message += '<p><a href="/"">refresh</a>'
     self.wfile.write(message)
     self.wfile.write('\n')
     return
