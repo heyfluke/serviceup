@@ -86,7 +86,7 @@ class serviceUp(Daemon):
     Need to add other protocols.
     Planned: ping, mysql, solr, APNS
     """
-    self.protocols = {'http', 'https'}
+    self.protocols = {'http', 'https', 'tcp_port'}
 
   def delegateTests(self):
     for host in self.config:
@@ -181,6 +181,33 @@ class serviceUp(Daemon):
 
         self.services[service_key]['status'] = 'OK'
         return True;
+    except Exception as e:
+      logging.warning(e)
+
+    self.services[service_key]['status'] = 'FAIL'
+    return False
+
+  def protocol_tcp_port(self, *args):
+    client = args[0]
+
+    service_key = 'tcp_'+client['host']+'_'+client['port']
+    if not self.services.has_key(service_key):
+      self.services[service_key] = {'lastcheck':time.localtime(), 'status':'UNKNOWN'}
+    else:
+      self.services[service_key]['lastcheck'] = time.localtime()
+
+    logging.info('running tcp_port on %s:%s', client['host'],client['port'])
+    try:
+      s = socket.socket()
+      try:
+        s.connect((client['host'], int(client['port'])))
+        logging.info('connected to %s:%s', client['host'],client['port'])
+      except socket.error, e:
+        self.services[service_key]['status'] = 'FAIL'
+        return False
+
+      self.services[service_key]['status'] = 'OK'
+      return True;
     except Exception as e:
       logging.warning(e)
 

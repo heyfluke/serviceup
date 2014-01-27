@@ -12,6 +12,20 @@ A simple service monitoring daemon written in Python, forked from jstarcher/serv
 1. Configuration is super easy. Follow the examples in config.ini to setup your own services. (copy config-dist.ini to config.ini first.)
 2. Start the daemon with ./serviceup.py start
 
+#### configurations
+
+##### http
+* get url and find some string in the content.
+	* url = str (eg. mydomain.com:8080)
+	* content = str  (eg. running)
+##### https
+* same as http
+
+##### tcp_port
+* just test whether the port is reachable.
+	* host
+	* port
+
 ### Advanced usage
 
 #### write your own plugin to support more protocols.
