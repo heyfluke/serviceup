@@ -6,7 +6,7 @@ A simple service monitoring daemon written in Python
 
 ## Usage
 
-1. Configuration is super easy. Follow the examples in config.ini to setup your own services. (move config-dist.ini to config.ini first.)
+1. Configuration is super easy. Follow the examples in config.ini to setup your own services. (copy config-dist.ini to config.ini first.)
 2. Start the daemon with ./serviceup.py start
 
 As of now there is only support for http and https. However, this daemon is expandable and
