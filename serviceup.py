@@ -27,18 +27,27 @@ logging.basicConfig(filename=log_file, format='%(asctime)s [%(levelname)s]: %(me
 
 class WebLogHandler(BaseHTTPRequestHandler):
   daemon = None
+  def linecolor(self, status):
+    if status == 'OK':
+      return '#99cc66'
+    elif status == 'UNKNOWN':
+      return '#FFFF00'
+    else:
+      return '#FF0000'
   def do_GET(self):
     self.send_response(200)
     self.end_headers()
-    message = '<meta http-equiv="refresh" content="60" />'
-    message += '<p>monitoring services:\n'
+    message = '<html><head><title>service status</title><meta http-equiv="refresh" content="60" /></head>'
+    message += '<body><p>monitoring services:\n'
     message += '<table width=90% cellpadding=0 cellspacing=1 border=0 bgcolor=#c6aa0a>'
-    message += '<tr bgcolor=#FFFFFF><td>Service</td><td>Last Check</td><td>Status</td></tr>'
+    message += '<tr bgcolor=#e7e7e7><td>Service</td><td>Last Check</td><td>Status</td></tr>'
     for k in daemon.services.keys():
-      message += '<tr bgcolor=#FFFFFF><td>%s</td><td>%s</td><td>%s</td></tr>' % (k, time.strftime('%m/%d/%Y %H:%M:%S %z', daemon.services[k]['lastcheck']), daemon.services[k]['status'])
+      message += '<tr bgcolor=%s><td>%s</td><td>%s</td><td>%s</td></tr>' % (self.linecolor(daemon.services[k]['status']), k, time.strftime('%m/%d/%Y %H:%M:%S %z', daemon.services[k]['lastcheck']), daemon.services[k]['status'])
     message += '</table>'
     message += '<p>current time: %s' % (time.strftime('%m/%d/%Y %H:%M:%S %z', time.localtime()))
     message += '<p><a href="/"">refresh</a>'
+    message += '<p>powered by <a href="https://github.com/heyfluke/serviceup">serviceup</a>'
+    message += '</body></html>'
     self.wfile.write(message)
     self.wfile.write('\n')
     return
