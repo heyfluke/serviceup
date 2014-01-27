@@ -1,8 +1,10 @@
 serviceup
 =========
 
-A simple service monitoring daemon written in Python
-* forked from jstarcher/serviceup
+A simple service monitoring daemon written in Python, forked from jstarcher/serviceup.
+* builtin monitoring function for http/https.
+* extensable monitoring for other kinds of protocols.
+* view status from builtin web server.
 
 ## Usage
 

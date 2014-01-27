@@ -9,6 +9,8 @@ import smtplib
 from configobj import ConfigObj
 from urlparse import urlparse
 from daemon import Daemon
+from webserver import HttpServerInBackground
+from BaseHTTPServer import BaseHTTPRequestHandler
 
 """
 Perform setup of variables used in all tasks
@@ -23,9 +25,32 @@ frequency = 5
 # Setup logging
 logging.basicConfig(filename=log_file, format='%(asctime)s [%(levelname)s]: %(message)s', datefmt='%m/%d/%Y %H:%M:%S %z', level=logging.DEBUG)
 
+class WebLogHandler(BaseHTTPRequestHandler):
+  daemon = None
+  def do_GET(self):
+    self.send_response(200)
+    self.end_headers()
+    message = '<p>monitoring services:\n'
+    message += '<table width=90% cellpadding=0 cellspacing=1 border=0 bgcolor=#99cc66>'
+    message += '<tr bgcolor=#FFFFFF><td>Service</td><td>Last Check</td><td>Status</td></tr>'
+    for k in daemon.services.keys():
+      message += '<tr bgcolor=#FFFFFF><td>%s</td><td>%s</td><td>%s</td></tr>' % (k, time.strftime('%m/%d/%Y %H:%M:%S %z', daemon.services[k]['lastcheck']), daemon.services[k]['status'])
+    message += '</table>'
+    self.wfile.write(message)
+    self.wfile.write('\n')
+    return
+
 class serviceUp(Daemon):
+
+  services = {}
+
   def run(self):
     self.setup()
+    background_server = None
+    if self.config.has_key('webserver_port'):
+      logging.info('start web server to serve the status info. listening on port %s' % (int(self.config['webserver_port'])))
+      WebLogHandler.daemon = self
+      background_server = HttpServerInBackground('0.0.0.0', int(self.config['webserver_port']), webhandler=WebLogHandler).start()
     while True:
       self.delegateTests()
       # Flush stdout so the buffer will write to the log.
@@ -33,6 +58,9 @@ class serviceUp(Daemon):
 
       # Sleep until next check.
       time.sleep((frequency * 60))
+    if background_server:
+      background_server.shutdown()
+    logging.info('daemon stopped')
 
   def setup(self):
     self.parseConfig()
@@ -69,13 +97,20 @@ class serviceUp(Daemon):
 
   def doTestWithPlugin(self, pluginname, *args):
     #print '>>>> doTestWithPlugin args[0]', args[0]
+    service_key = 'plugin_'+pluginname
+    if not self.services.has_key(service_key):
+      self.services[service_key] = {'lastcheck':time.localtime(), 'status':'UNKNOWN'}
+
     try:
       pluginmodule = __import__('plugins.%s' % (pluginname,))
       plugin = eval('pluginmodule.%s' % (pluginname,))
       logging.info('running test using plugin %s' % (pluginname,))
-      return plugin.plugin_entry(**args[0])
+      ret = plugin.plugin_entry(**args[0])
+      self.services[service_key]['status'] = ret and 'OK' or 'FAIL'
+      return ret
     except Exception as e:
       logging.warning(e)
+      self.services[service_key]['status'] = 'FAIL'
       return False
 
   def doTest(self, protocol, *args):
@@ -86,6 +121,11 @@ class serviceUp(Daemon):
 
   def protocol_http(self, *args):
     client = args[0]
+
+    service_key = 'http_'+client['url']
+    if not self.services.has_key(service_key):
+      self.services[service_key] = {'lastcheck':time.localtime(), 'status':'UNKNOWN'}
+
     logging.info('running http on %s', client['url'])
     try:
       r = requests.get('http://' + client['url'])
@@ -93,16 +133,24 @@ class serviceUp(Daemon):
         if (client['content']):
           pos = r.text.find(client['content'])
           if (pos == -1):
+            self.services[service_key]['status'] = 'FAIL'
             return False
 
+        self.services[service_key]['status'] = 'OK'
         return True;
     except Exception as e:
       logging.warning(e)
 
+    self.services[service_key]['status'] = 'FAIL'
     return False
 
   def protocol_https(self, *args):
     client = args[0]
+
+    service_key = 'https_'+client['url']
+    if not self.services.has_key(service_key):
+      self.services[service_key] = {'lastcheck':time.localtime(), 'status':'UNKNOWN'}
+
     logging.info('running https on %s', client['url'])
     try:
       r = requests.get('https://' + client['url'])
@@ -110,12 +158,15 @@ class serviceUp(Daemon):
         if (client['content']):
           pos = r.text.find(client['content'])
           if (pos == -1):
+            self.services[service_key]['status'] = 'FAIL'
             return False
 
+        self.services[service_key]['status'] = 'OK'
         return True;
     except Exception as e:
       logging.warning(e)
 
+    self.services[service_key]['status'] = 'FAIL'
     return False
 
   def notify(self, *args):
