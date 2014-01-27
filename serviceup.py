@@ -51,6 +51,7 @@ class serviceUp(Daemon):
   def delegateTests(self):
     for host in self.config:
       for x in self.config[host]:
+        #print '>>>>> x:', x
         if x in self.protocols:
           result = self.doTest(x, self.config[host][x])
           if (result):
@@ -58,6 +59,24 @@ class serviceUp(Daemon):
           else:
             logging.info('%s %s test failed', host, x)
             self.notify(host, x)
+        if x[:7] == 'plugin_':
+          result = self.doTestWithPlugin(x[7:], self.config[host][x])
+          if (result):
+            logging.info('%s %s test passed', host, x)
+          else:
+            logging.info('%s %s test failed', host, x)
+            self.notify(host, x)
+
+  def doTestWithPlugin(self, pluginname, *args):
+    #print '>>>> doTestWithPlugin args[0]', args[0]
+    try:
+      pluginmodule = __import__('plugins.%s' % (pluginname,))
+      plugin = eval('pluginmodule.%s' % (pluginname,))
+      logging.info('running test using plugin %s' % (pluginname,))
+      return plugin.plugin_entry(**args[0])
+    except Exception as e:
+      logging.warning(e)
+      return False
 
   def doTest(self, protocol, *args):
     return getattr(self, 'protocol_'+protocol, self.defaultTest)(*args)
