@@ -30,8 +30,9 @@ class WebLogHandler(BaseHTTPRequestHandler):
   def do_GET(self):
     self.send_response(200)
     self.end_headers()
-    message = '<p>monitoring services:\n'
-    message += '<table width=90% cellpadding=0 cellspacing=1 border=0 bgcolor=#99cc66>'
+    message = '<meta http-equiv="refresh" content="60" />'
+    message += '<p>monitoring services:\n'
+    message += '<table width=90% cellpadding=0 cellspacing=1 border=0 bgcolor=#c6aa0a>'
     message += '<tr bgcolor=#FFFFFF><td>Service</td><td>Last Check</td><td>Status</td></tr>'
     for k in daemon.services.keys():
       message += '<tr bgcolor=#FFFFFF><td>%s</td><td>%s</td><td>%s</td></tr>' % (k, time.strftime('%m/%d/%Y %H:%M:%S %z', daemon.services[k]['lastcheck']), daemon.services[k]['status'])
