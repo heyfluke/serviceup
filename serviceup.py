@@ -112,6 +112,8 @@ class serviceUp(Daemon):
     service_key = 'plugin_'+pluginname
     if not self.services.has_key(service_key):
       self.services[service_key] = {'lastcheck':time.localtime(), 'status':'UNKNOWN'}
+    else:
+      self.services[service_key]['lastcheck'] = time.localtime()
 
     try:
       pluginmodule = __import__('plugins.%s' % (pluginname,))
@@ -137,6 +139,8 @@ class serviceUp(Daemon):
     service_key = 'http_'+client['url']
     if not self.services.has_key(service_key):
       self.services[service_key] = {'lastcheck':time.localtime(), 'status':'UNKNOWN'}
+    else:
+      self.services[service_key]['lastcheck'] = time.localtime()
 
     logging.info('running http on %s', client['url'])
     try:
@@ -162,6 +166,8 @@ class serviceUp(Daemon):
     service_key = 'https_'+client['url']
     if not self.services.has_key(service_key):
       self.services[service_key] = {'lastcheck':time.localtime(), 'status':'UNKNOWN'}
+    else:
+      self.services[service_key]['lastcheck'] = time.localtime()
 
     logging.info('running https on %s', client['url'])
     try:
