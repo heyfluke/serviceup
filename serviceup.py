@@ -136,7 +136,7 @@ class serviceUp(Daemon):
   def protocol_http(self, *args):
     client = args[0]
 
-    service_key = 'http_'+client['url']
+    service_key = client.has_key('name') and 'http_'+client['name'] or 'http_'+client['url']
     if not self.services.has_key(service_key):
       self.services[service_key] = {'lastcheck':time.localtime(), 'status':'UNKNOWN'}
     else:
@@ -163,7 +163,7 @@ class serviceUp(Daemon):
   def protocol_https(self, *args):
     client = args[0]
 
-    service_key = 'https_'+client['url']
+    service_key = client.has_key('name') and 'https_'+client['name'] or 'https_'+client['url']
     if not self.services.has_key(service_key):
       self.services[service_key] = {'lastcheck':time.localtime(), 'status':'UNKNOWN'}
     else:
@@ -190,7 +190,7 @@ class serviceUp(Daemon):
   def protocol_tcp_port(self, *args):
     client = args[0]
 
-    service_key = 'tcp_'+client['host']+'_'+client['port']
+    service_key = client.has_key('name') and 'tcp_'+client['name'] or 'tcp_'+client['host']+'_'+client['port']
     if not self.services.has_key(service_key):
       self.services[service_key] = {'lastcheck':time.localtime(), 'status':'UNKNOWN'}
     else:
